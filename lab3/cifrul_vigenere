@@ -1,0 +1,82 @@
+import sys
+
+ALPHABET = [
+    'A', 'Ă', 'Â', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'Î', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'Ș', 'T', 'Ț', 'U', 'V', 'W', 'X', 'Y', 'Z'
+]
+
+CHAR_TO_IDX = {char: idx for idx, char in enumerate(ALPHABET)}
+IDX_TO_CHAR = {idx: char for idx, char in enumerate(ALPHABET)}
+
+def preprocess(text, field_name="Text"):
+    """Removes spaces, converts to uppercase, and validates characters."""
+    cleaned = [c.upper() for c in text if not c.isspace()]
+    
+    for char in cleaned:
+        if char not in CHAR_TO_IDX:
+            raise ValueError(f"Invalid character '{char}' in {field_name}. Only Romanian letters are allowed.")
+            
+    return "".join(cleaned)
+
+def validate_key(key):
+    """Preprocesses key and checks minimum length of 7."""
+    processed = preprocess(key, "Key")
+    if len(processed) < 7:
+        raise ValueError(f"Key must be at least 7 letters long (got {len(processed)}).")
+    return processed
+
+def _vigenere_transform(text, key, decrypt=False):
+    result = []
+    key_len = len(key)
+    
+    for i, char in enumerate(text):
+        c_idx = CHAR_TO_IDX[char]
+        k_idx = CHAR_TO_IDX[key[i % key_len]]
+        
+        shift = (c_idx - k_idx) if decrypt else (c_idx + k_idx)
+        result.append(IDX_TO_CHAR[shift % 31])
+        
+    return "".join(result)
+
+def main():
+    print("Vigenère Cipher (31-Letter Romanian Alphabet)")
+    
+    while True:
+        print("\n1. Encrypt message\n2. Decrypt ciphertext\n0. Exit")
+        choice = input("Option: ").strip()
+        
+        if choice == '0':
+            print("Goodbye!")
+            break
+            
+        if choice in ['1', '2']:
+            try:
+                # 1. Ask for key and validate immediately
+                raw_key = input("Enter key (min 7 characters): ")
+                p_key = validate_key(raw_key)
+                
+                # 2. Ask for text and validate immediately
+                if choice == '1':
+                    raw_text = input("Enter plaintext: ")
+                    p_text = preprocess(raw_text, "Plaintext")
+                    
+                    cipher = _vigenere_transform(p_text, p_key, decrypt=False)
+                    print(f"\nProcessed Text : {p_text}")
+                    print(f"Processed Key  : {p_key}")
+                    print(f"Ciphertext     : {cipher}")
+                else:
+                    raw_text = input("Enter ciphertext: ")
+                    c_text = preprocess(raw_text, "Ciphertext")
+                    
+                    plain = _vigenere_transform(c_text, p_key, decrypt=True)
+                    print(f"\nProcessed Ciphertext: {c_text}")
+                    print(f"Processed Key       : {p_key}")
+                    print(f"Decrypted Text      : {plain}")
+                    
+            except ValueError as err:
+                print(f"[Error] {err}")
+        else:
+            print("Invalid option! Please enter 0, 1, or 2.")
+
+if __name__ == "__main__":
+    main()
